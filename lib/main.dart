@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' as math;
 
 import 'package:flutter/material.dart';
@@ -17,98 +18,186 @@ class EasyMartApp extends StatelessWidget {
       theme: ThemeData(
         useMaterial3: true,
         colorScheme: ColorScheme.fromSeed(
-          seedColor: const Color(0xFF1F9D55),
+          seedColor: const Color(0xFFFF6D2E),
           brightness: Brightness.light,
         ),
-        scaffoldBackgroundColor: const Color(0xFFF4F8F3),
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         textTheme: ThemeData.light().textTheme.apply(
-          bodyColor: const Color(0xFF1D2F1F),
-          displayColor: const Color(0xFF1D2F1F),
+          bodyColor: const Color(0xFF0D2347),
+          displayColor: const Color(0xFF0D2347),
         ),
       ),
-      home: const EasyMartHomePage(),
+      home: const LoginScreen(),
     );
   }
 }
 
-class EasyMartHomePage extends StatefulWidget {
-  const EasyMartHomePage({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  State<EasyMartHomePage> createState() => _EasyMartHomePageState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _EasyMartHomePageState extends State<EasyMartHomePage> {
+class _LoginScreenState extends State<LoginScreen> {
+  String _selectedRole = 'user';
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: SafeArea(
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            children: [
+              const SizedBox(height: 40),
+              SizedBox(
+                height: 120,
+                child: Image.network(
+                  'https://www.svgrepo.com/show/13666/shopping-cart.svg',
+                  fit: BoxFit.contain,
+                  errorBuilder: (_, __, ___) => Container(
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFFFF6D2E), Color(0xFFFFA500)],
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: const Center(
+                      child: Icon(Icons.shopping_cart, size: 60, color: Colors.white),
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'EasyMart',
+                style: TextStyle(fontSize: 32, fontWeight: FontWeight.w800),
+              ),
+              const Text(
+                'Easy Shop, Smart Choice',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Color(0xFF666),
+                  letterSpacing: 1,
+                ),
+              ),
+              const SizedBox(height: 60),
+              Card(
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Select Your Role',
+                        style: TextStyle(fontSize: 22, fontWeight: FontWeight.w700),
+                      ),
+                      const SizedBox(height: 24),
+                      _roleOption('user', Icons.person, 'Customer'),
+                      const SizedBox(height: 12),
+                      _roleOption('admin', Icons.admin_panel_settings, 'Admin'),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(height: 32),
+              SizedBox(
+                width: double.infinity,
+                child: FilledButton(
+                  style: FilledButton.styleFrom(
+                    backgroundColor: const Color(0xFFFF6D2E),
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  onPressed: () {
+                    if (_selectedRole == 'user') {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const UserDashboard()),
+                      );
+                    } else {
+                      Navigator.of(context).pushReplacement(
+                        MaterialPageRoute(builder: (_) => const AdminDashboard()),
+                      );
+                    }
+                  },
+                  child: const Text(
+                    'Continue',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _roleOption(String value, IconData icon, String label) {
+    final isSelected = _selectedRole == value;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedRole = value),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? const Color(0xFFFF6D2E) : Colors.grey.shade300,
+            width: isSelected ? 2 : 1,
+          ),
+          color: isSelected ? const Color(0xFFFFF5F0) : Colors.white,
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 32, color: isSelected ? const Color(0xFFFF6D2E) : Colors.grey),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+                color: isSelected ? const Color(0xFFFF6D2E) : Colors.black,
+              ),
+            ),
+            const Spacer(),
+            Radio<String>(
+              value: value,
+              groupValue: _selectedRole,
+              onChanged: (v) => setState(() => _selectedRole = v!),
+              activeColor: const Color(0xFFFF6D2E),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class UserDashboard extends StatefulWidget {
+  const UserDashboard({super.key});
+
+  @override
+  State<UserDashboard> createState() => _UserDashboardState();
+}
+
+class _UserDashboardState extends State<UserDashboard> {
   final TextEditingController _searchController = TextEditingController();
   String _selectedCategory = 'All';
   String _selectedPeriod = 'weekly';
+  int _selectedNavIndex = 0;
 
   List<Product> get _filteredProducts {
     final query = _searchController.text.trim().toLowerCase();
     return products.where((product) {
-      final matchesCategory =
-          _selectedCategory == 'All' || product.category == _selectedCategory;
+      final matchesCategory = _selectedCategory == 'All' || product.category == _selectedCategory;
       final matchesQuery = query.isEmpty ||
           product.name.toLowerCase().contains(query) ||
           product.category.toLowerCase().contains(query);
       return matchesCategory && matchesQuery;
     }).toList();
-  }
-
-  double get _grossSales => orders.fold(0.0, (sum, order) => sum + order.subtotal);
-
-  double get _avgBasket => orders.isEmpty ? 0 : _grossSales / orders.length;
-
-  String get _topCategory {
-    final map = <String, int>{};
-    for (final order in orders) {
-      for (final line in order.items) {
-        final product = productMap[line.productId]!;
-        map[product.category] = (map[product.category] ?? 0) + line.quantity;
-      }
-    }
-
-    if (map.isEmpty) return 'N/A';
-    final entry = map.entries.reduce((best, current) {
-      return current.value > best.value ? current : best;
-    });
-    return entry.key;
-  }
-
-  List<ChartPoint> get _currentChartData {
-    if (_selectedPeriod == 'monthly') {
-      final labels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct'];
-      final values = <double>[];
-
-      for (int i = 0; i < labels.length; i++) {
-        final monthValue = orders.where((order) {
-          final orderDate = DateTime.parse(order.date);
-          return orderDate.month == (i + 1);
-        }).fold<double>(0.0, (sum, order) => sum + order.subtotal);
-        values.add(monthValue);
-      }
-
-      return [
-        for (int i = 0; i < labels.length; i++) ChartPoint(labels[i], values[i]),
-      ];
-    }
-
-    final week = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final values = <double>[];
-    for (int i = 0; i < week.length; i++) {
-      final dayValue = orders.where((order) {
-        final parsed = DateTime.parse(order.date);
-        final targetDay = DateTime(2026, 10, 3).subtract(Duration(days: 6 - i));
-        return parsed.year == targetDay.year &&
-            parsed.month == targetDay.month &&
-            parsed.day == targetDay.day;
-      }).fold<double>(0.0, (sum, order) => sum + order.subtotal);
-      values.add(dayValue);
-    }
-
-    return [
-      for (int i = 0; i < week.length; i++) ChartPoint(week[i], values[i]),
-    ];
   }
 
   @override
@@ -119,141 +208,61 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
 
   @override
   Widget build(BuildContext context) {
-    final screenWidth = MediaQuery.sizeOf(context).width;
-
     return Scaffold(
       appBar: AppBar(
         title: const Text('EasyMart'),
         centerTitle: false,
-        actions: const [
+        actions: [
           Padding(
-            padding: EdgeInsets.only(right: 12),
-            child: CircleAvatar(
-              backgroundColor: Color(0xFFEAF6EE),
-              child: Icon(Icons.shopping_basket_outlined, color: Color(0xFF1F9D55)),
+            padding: const EdgeInsets.only(right: 16),
+            child: GestureDetector(
+              onTap: () {},
+              child: CircleAvatar(
+                backgroundColor: const Color(0xFFFFF5F0),
+                child: const Icon(Icons.shopping_basket_outlined, color: Color(0xFFFF6D2E)),
+              ),
             ),
           ),
         ],
       ),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          padding: const EdgeInsets.all(16),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Fresh picks and fast delivery',
-                style: TextStyle(
-                  fontSize: 12,
-                  fontWeight: FontWeight.w700,
-                  letterSpacing: 1.2,
-                  color: Color(0xFF1F9D55),
-                ),
-              ),
-              const SizedBox(height: 8),
-              const Text(
-                'Groceries made simple',
-                style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
-              ),
-              const SizedBox(height: 16),
-              _buildSummaryCards(),
-              const SizedBox(height: 20),
-              _buildCatalogSection(screenWidth),
-              const SizedBox(height: 20),
-              _buildAnalyticsPanel(),
-              const SizedBox(height: 20),
-              _buildOrderHistory(),
-            ],
-          ),
-        ),
+      body: _selectedNavIndex == 0
+          ? _buildCatalogView()
+          : _selectedNavIndex == 1
+              ? _buildOrderHistoryView()
+              : _buildAnalyticsView(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedNavIndex,
+        onTap: (index) => setState(() => _selectedNavIndex = index),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Shop'),
+          BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Orders'),
+          BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Analytics'),
+        ],
       ),
     );
   }
 
-  Widget _buildSummaryCards() {
-    final summaryItems = [
-      SummaryItem(label: 'Gross sales', value: _formatCurrency(_grossSales)),
-      SummaryItem(label: 'Orders', value: '${orders.length}'),
-      SummaryItem(label: 'Avg. basket', value: _formatCurrency(_avgBasket)),
-      SummaryItem(label: 'Top category', value: _topCategory),
-    ];
+  Widget _buildCatalogView() {
+    final screenWidth = MediaQuery.sizeOf(context).width;
 
-    return GridView.builder(
-      itemCount: summaryItems.length,
-      shrinkWrap: true,
-      physics: const NeverScrollableScrollPhysics(),
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 2,
-        mainAxisSpacing: 12,
-        crossAxisSpacing: 12,
-        childAspectRatio: 1.6,
-      ),
-      itemBuilder: (context, index) {
-        final item = summaryItems[index];
-        return Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.circular(18),
-            border: Border.all(color: const Color(0xFFE2EDE5)),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withOpacity(0.02),
-                blurRadius: 10,
-                offset: const Offset(0, 4),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(
-                item.label,
-                style: const TextStyle(
-                  color: Color(0xFF58715A),
-                  fontSize: 12,
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const Spacer(),
-              Text(
-                item.value,
-                style: const TextStyle(
-                  fontSize: 24,
-                  fontWeight: FontWeight.w800,
-                ),
-              ),
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _buildCatalogSection(double screenWidth) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE7EFE9)),
-      ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Fresh groceries',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            'Fresh Groceries',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
           ),
           const SizedBox(height: 16),
           TextField(
             controller: _searchController,
             onChanged: (_) => setState(() {}),
             decoration: InputDecoration(
-              hintText: 'Search fruits, dairy, pantry...',
+              hintText: 'Search products...',
               prefixIcon: const Icon(Icons.search),
               filled: true,
-              fillColor: const Color(0xFFF2F6F3),
+              fillColor: Colors.grey.shade100,
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(14),
                 borderSide: BorderSide.none,
@@ -270,17 +279,13 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
               return ChoiceChip(
                 label: Text(category),
                 selected: isSelected,
-                selectedColor: const Color(0xFFEAF6EE),
+                selectedColor: const Color(0xFFFF6D2E),
                 labelStyle: TextStyle(
-                  color: isSelected ? const Color(0xFF1F9D55) : const Color(0xFF52675A),
+                  color: isSelected ? Colors.white : const Color(0xFF0D2347),
                   fontWeight: FontWeight.w700,
                 ),
-                backgroundColor: const Color(0xFFF2F6F3),
-                onSelected: (_) {
-                  setState(() {
-                    _selectedCategory = category;
-                  });
-                },
+                backgroundColor: Colors.grey.shade200,
+                onSelected: (_) => setState(() => _selectedCategory = category),
               );
             }).toList(),
           ),
@@ -299,12 +304,12 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
               final product = _filteredProducts[index];
               return Card(
                 margin: EdgeInsets.zero,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(18)),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     ClipRRect(
-                      borderRadius: const BorderRadius.vertical(top: Radius.circular(18)),
+                      borderRadius: const BorderRadius.vertical(top: Radius.circular(16)),
                       child: Image.network(
                         product.imageUrl,
                         height: 140,
@@ -323,54 +328,55 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                                 decoration: BoxDecoration(
-                                  color: const Color(0xFFEAF6EE),
+                                  color: const Color(0xFFFFF5F0),
                                   borderRadius: BorderRadius.circular(999),
+                                  border: Border.all(color: const Color(0xFFFF6D2E), width: 1),
                                 ),
                                 child: Text(
                                   product.category,
                                   style: const TextStyle(
                                     fontSize: 10,
                                     fontWeight: FontWeight.w700,
-                                    color: Color(0xFF1F9D55),
+                                    color: Color(0xFFFF6D2E),
                                   ),
                                 ),
                               ),
                               Text(
                                 '⭐ ${product.rating.toStringAsFixed(1)}',
-                                style: const TextStyle(fontWeight: FontWeight.w700),
+                                style: const TextStyle(fontWeight: FontWeight.w700, fontSize: 12),
                               ),
                             ],
                           ),
                           const SizedBox(height: 10),
                           Text(
                             product.name,
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w700,
-                            ),
+                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          const SizedBox(height: 18),
+                          const SizedBox(height: 12),
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
                               Text(
-                                _formatCurrency(product.price),
+                                '\$${product.price.toStringAsFixed(2)}',
                                 style: const TextStyle(
-                                  fontSize: 22,
+                                  fontSize: 20,
                                   fontWeight: FontWeight.w800,
+                                  color: Color(0xFFFF6D2E),
                                 ),
                               ),
                               FilledButton(
                                 style: FilledButton.styleFrom(
-                                  backgroundColor: const Color(0xFF1F9D55),
+                                  backgroundColor: const Color(0xFFFF6D2E),
                                   foregroundColor: Colors.white,
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                   shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
+                                    borderRadius: BorderRadius.circular(10),
                                   ),
                                 ),
                                 onPressed: () {},
-                                child: const Text('Add'),
+                                child: const Text('Add', style: TextStyle(fontSize: 12)),
                               ),
                             ],
                           ),
@@ -382,255 +388,43 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
               );
             },
           ),
-          if (_filteredProducts.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 22),
-              child: Center(
-                child: Text(
-                  'No products match your search.',
-                  style: TextStyle(color: Color(0xFF59715D), fontWeight: FontWeight.w600),
-                ),
-              ),
-            ),
         ],
       ),
     );
   }
 
-  Widget _buildAnalyticsPanel() {
-    final chartData = _currentChartData;
-    final maxValue = chartData.fold<double>(0.0, (max, point) => math.max(max, point.value));
-    final total = chartData.fold<double>(0.0, (sum, point) => sum + point.value);
-    final average = chartData.isEmpty ? 0.0 : total / chartData.length;
-    final bestPoint = chartData.reduce((best, current) =>
-        current.value > best.value ? current : best);
-
-    final categorySpend = <String, double>{};
-    for (final order in orders) {
-      for (final line in order.items) {
-        final product = productMap[line.productId]!;
-        categorySpend[product.category] =
-            (categorySpend[product.category] ?? 0.0) + (product.price * line.quantity);
-      }
-    }
-
-    final topCategories = categorySpend.entries.toList()
-      ..sort((a, b) => b.value.compareTo(a.value));
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE7EFE9)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              const Text(
-                'Purchase analytics',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
-              ),
-              SegmentedButton<String>(
-                segments: const [
-                  ButtonSegment(value: 'weekly', label: Text('Weekly')),
-                  ButtonSegment(value: 'monthly', label: Text('Monthly')),
-                ],
-                selected: {_selectedPeriod},
-                onSelectionChanged: (selection) {
-                  setState(() {
-                    _selectedPeriod = selection.first;
-                  });
-                },
-                showSelectedIcon: false,
-              ),
-            ],
-          ),
-          const SizedBox(height: 18),
-          GridView.count(
-            crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            shrinkWrap: true,
-            physics: const NeverScrollableScrollPhysics(),
-            childAspectRatio: 1.8,
-            children: [
-              _metricCard('Spend', _formatCurrency(total)),
-              _metricCard('Average', _formatCurrency(average)),
-              _metricCard('Best', bestPoint.label),
-              _metricCard('Orders', '${orders.length}'),
-            ],
-          ),
-          const SizedBox(height: 20),
-          SizedBox(
-            height: 180,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: chartData.map((point) {
-                final height = maxValue == 0 ? 0.0 : (point.value / maxValue) * 100;
-                return Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.end,
-                      children: [
-                        Container(
-                          height: height,
-                          constraints: const BoxConstraints(minHeight: 16),
-                          decoration: BoxDecoration(
-                            borderRadius: const BorderRadius.vertical(top: Radius.circular(12)),
-                            gradient: const LinearGradient(
-                              begin: Alignment.bottomCenter,
-                              end: Alignment.topCenter,
-                              colors: [Color(0xFF1F9D55), Color(0xFF7CCB9B)],
-                            ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          point.label,
-                          style: const TextStyle(fontSize: 11, color: Color(0xFF58715A)),
-                        ),
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'Category volume',
-            style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-          ),
-          const SizedBox(height: 12),
-          ...topCategories.take(4).map((entry) {
-            final index = topCategories.indexOf(entry);
-            final palette = [
-              const Color(0xFF2DBB74),
-              const Color(0xFF7CCB9B),
-              const Color(0xFFF4C96F),
-              const Color(0xFF8CA8FF),
-            ];
-
-            return Padding(
-              padding: const EdgeInsets.only(bottom: 10),
-              child: Row(
-                children: [
-                  Container(
-                    width: 12,
-                    height: 12,
-                    decoration: BoxDecoration(
-                      color: palette[index % palette.length],
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          entry.key,
-                          style: const TextStyle(fontWeight: FontWeight.w700),
-                        ),
-                        const Text(
-                          'Category volume',
-                          style: TextStyle(fontSize: 11, color: Color(0xFF58715A)),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    _formatCurrency(entry.value),
-                    style: const TextStyle(fontWeight: FontWeight.w800),
-                  ),
-                ],
-              ),
-            );
-          }),
-        ],
-      ),
-    );
-  }
-
-  Widget _metricCard(String label, String value) {
-    return Container(
-      padding: const EdgeInsets.all(14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFF7FBF7),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: const Color(0xFFE3F0E6)),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text(
-            label,
-            style: const TextStyle(fontSize: 12, color: Color(0xFF58715A)),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            value,
-            style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildOrderHistory() {
-    final weeklySpend = orders
-        .where((order) => DateTime.parse(order.date).isAfter(DateTime(2026, 9, 27)))
-        .fold<double>(0.0, (sum, order) => sum + order.subtotal);
-    final monthlySpend = orders
-        .where((order) => DateTime.parse(order.date).month == 9)
-        .fold<double>(0.0, (sum, order) => sum + order.subtotal);
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.circular(22),
-        border: Border.all(color: const Color(0xFFE7EFE9)),
-      ),
+  Widget _buildOrderHistoryView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            'Order history',
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+            'Your Orders',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
           ),
-          const SizedBox(height: 12),
-          Wrap(
-            spacing: 10,
-            runSpacing: 8,
-            children: [
-              Chip(
-                label: Text('Weekly ${_formatCurrency(weeklySpend)}'),
-                backgroundColor: const Color(0xFFEAF6EE),
-              ),
-              Chip(
-                label: Text('Monthly ${_formatCurrency(monthlySpend)}'),
-                backgroundColor: const Color(0xFFEAF6EE),
-              ),
-            ],
-          ),
-          const SizedBox(height: 14),
+          const SizedBox(height: 16),
           ...orders.map((order) {
             return InkWell(
-              borderRadius: BorderRadius.circular(18),
-              onTap: () => _showOrderDetails(order),
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => Navigator.of(context).push(
+                MaterialPageRoute(
+                  builder: (_) => OrderTrackingPage(order: order),
+                ),
+              ),
               child: Container(
                 margin: const EdgeInsets.only(bottom: 12),
                 padding: const EdgeInsets.all(16),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFF9FBF9),
-                  borderRadius: BorderRadius.circular(18),
-                  border: Border.all(color: const Color(0xFFE6EFE7)),
+                  color: Colors.white,
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.grey.shade200),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withOpacity(0.02),
+                      blurRadius: 10,
+                    ),
+                  ],
                 ),
                 child: Column(
                   children: [
@@ -642,16 +436,17 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
                           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
                         ),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                           decoration: BoxDecoration(
-                            color: const Color(0xFFEAF6EE),
+                            color: const Color(0xFFFFF5F0),
                             borderRadius: BorderRadius.circular(999),
+                            border: Border.all(color: const Color(0xFFFF6D2E), width: 1),
                           ),
                           child: Text(
                             order.status,
                             style: const TextStyle(
                               fontSize: 11,
-                              color: Color(0xFF1F9D55),
+                              color: Color(0xFFFF6D2E),
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -661,23 +456,36 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
                     const SizedBox(height: 10),
                     Row(
                       children: [
-                        const Icon(Icons.calendar_today_outlined, size: 16, color: Color(0xFF58715A)),
+                        Icon(Icons.calendar_today_outlined, size: 14, color: Colors.grey.shade600),
                         const SizedBox(width: 6),
-                        Text(_formatDate(order.date), style: const TextStyle(color: Color(0xFF58715A))),
+                        Text(
+                          _formatDate(order.date),
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        ),
                         const SizedBox(width: 18),
-                        const Icon(Icons.local_shipping_outlined, size: 16, color: Color(0xFF58715A)),
+                        Icon(Icons.location_on_outlined, size: 14, color: Colors.grey.shade600),
                         const SizedBox(width: 6),
-                        Text(order.deliveryMethod, style: const TextStyle(color: Color(0xFF58715A))),
+                        Text(
+                          order.deliveryMethod,
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        ),
                       ],
                     ),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text('${order.items.length} items', style: const TextStyle(color: Color(0xFF58715A))),
                         Text(
-                          _formatCurrency(order.subtotal),
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                          '${order.items.length} items',
+                          style: const TextStyle(fontWeight: FontWeight.w600),
+                        ),
+                        Text(
+                          '\$${order.subtotal.toStringAsFixed(2)}',
+                          style: const TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w800,
+                            color: Color(0xFFFF6D2E),
+                          ),
                         ),
                       ],
                     ),
@@ -691,63 +499,258 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
     );
   }
 
-  void _showOrderDetails(StoreOrder order) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+  Widget _buildAnalyticsView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Analytics',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 16),
+          SegmentedButton<String>(
+            segments: const [
+              ButtonSegment(value: 'weekly', label: Text('Weekly')),
+              ButtonSegment(value: 'monthly', label: Text('Monthly')),
+            ],
+            selected: {_selectedPeriod},
+            onSelectionChanged: (selection) {
+              setState(() => _selectedPeriod = selection.first);
+            },
+          ),
+          const SizedBox(height: 18),
+          GridView.count(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 1.8,
+            children: [
+              _metricCard('Total Orders', '${orders.length}'),
+              _metricCard('Total Spend', '\$${orders.fold<double>(0.0, (sum, order) => sum + order.subtotal).toStringAsFixed(2)}'),
+              _metricCard('Avg. Basket', '\$${(orders.fold<double>(0.0, (sum, order) => sum + order.subtotal) / orders.length).toStringAsFixed(2)}'),
+              _metricCard('Saved', '\$${(orders.length * 5.5).toStringAsFixed(2)}'),
+            ],
+          ),
+        ],
       ),
-      builder: (context) {
-        return Padding(
-          padding: const EdgeInsets.all(20),
-          child: SizedBox(
-            height: MediaQuery.sizeOf(context).height * 0.7,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Order details',
-                      style: TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
-                    ),
-                    IconButton(
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  order.id,
-                  style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  '${_formatDate(order.date)} • ${order.status} • ${order.deliveryMethod}',
-                  style: const TextStyle(color: Color(0xFF58715A)),
-                ),
-                const SizedBox(height: 16),
-                Expanded(
-                  child: ListView.separated(
-                    itemCount: order.items.length,
-                    separatorBuilder: (_, __) => const SizedBox(height: 12),
-                    itemBuilder: (context, index) {
-                      final line = order.items[index];
-                      final product = productMap[line.productId]!;
-                      final total = product.price * line.quantity;
+    );
+  }
 
-                      return Row(
+  Widget _metricCard(String label, String value) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Colors.grey.shade200),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: const TextStyle(fontSize: 12, color: Color(0xFF666)),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800),
+          ),
+        ],
+      ),
+    );
+  }
+
+  String _formatDate(String isoDate) {
+    final date = DateTime.parse(isoDate);
+    return '${['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'][date.month - 1]} ${date.day}, ${date.year}';
+  }
+}
+
+class OrderTrackingPage extends StatefulWidget {
+  final StoreOrder order;
+
+  const OrderTrackingPage({super.key, required this.order});
+
+  @override
+  State<OrderTrackingPage> createState() => _OrderTrackingPageState();
+}
+
+class _OrderTrackingPageState extends State<OrderTrackingPage> {
+  late Timer _timer;
+  late int _elapsedSeconds;
+  late Map<String, dynamic> _locationData;
+
+  @override
+  void initState() {
+    super.initState();
+    _elapsedSeconds = 0;
+    _locationData = {
+      'latitude': 40.7128 + (math.Random().nextDouble() - 0.5) * 0.05,
+      'longitude': -74.0060 + (math.Random().nextDouble() - 0.5) * 0.05,
+      'accuracy': 50 + math.Random().nextInt(50),
+    };
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (_) {
+      setState(() {
+        _elapsedSeconds++;
+        _locationData['latitude'] += (math.Random().nextDouble() - 0.5) * 0.001;
+        _locationData['longitude'] += (math.Random().nextDouble() - 0.5) * 0.001;
+      });
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String _formatTime(int seconds) {
+    final hours = seconds ~/ 3600;
+    final minutes = (seconds % 3600) ~/ 60;
+    final secs = seconds % 60;
+
+    if (hours > 0) {
+      return '$hours h ${minutes} min ${secs} sec';
+    } else if (minutes > 0) {
+      return '$minutes min ${secs} sec';
+    } else {
+      return '$secs sec';
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(title: const Text('Track Order')),
+      body: SingleChildScrollView(
+        child: Column(
+          children: [
+            Container(
+              height: 300,
+              color: Colors.grey.shade200,
+              child: Stack(
+                alignment: Alignment.center,
+                children: [
+                  Container(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                        colors: [
+                          Colors.blue.shade200,
+                          Colors.green.shade200,
+                        ],
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    left: ((_locationData['longitude'] + 74.0060) / 0.1) * 100,
+                    top: ((40.7128 - _locationData['latitude']) / 0.1) * 100,
+                    child: Container(
+                      width: 20,
+                      height: 20,
+                      decoration: BoxDecoration(
+                        color: const Color(0xFFFF6D2E),
+                        shape: BoxShape.circle,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.orange.withOpacity(0.5),
+                            blurRadius: 15,
+                            spreadRadius: 5,
+                          ),
+                        ],
+                      ),
+                      child: const Icon(
+                        Icons.directions_bike,
+                        size: 12,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 16,
+                    top: 16,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        boxShadow: [
+                          BoxShadow(color: Colors.black.withOpacity(0.1), blurRadius: 10),
+                        ],
+                      ),
+                      child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
+                          const Text(
+                            'Elapsed Time',
+                            style: TextStyle(fontSize: 10, color: Color(0xFF666)),
+                          ),
+                          Text(
+                            _formatTime(_elapsedSeconds),
+                            style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w800),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.order.id,
+                    style: const TextStyle(fontSize: 24, fontWeight: FontWeight.w800),
+                  ),
+                  const SizedBox(height: 8),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF5F0),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFFF6D2E), width: 1),
+                        ),
+                        child: const Text(
+                          'Out for Delivery',
+                          style: TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFFF6D2E),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Order Items',
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w700),
+                  ),
+                  const SizedBox(height: 12),
+                  ...widget.order.items.map((item) {
+                    final product = productMap[item.productId]!;
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: Row(
+                        children: [
                           ClipRRect(
-                            borderRadius: BorderRadius.circular(12),
+                            borderRadius: BorderRadius.circular(8),
                             child: Image.network(
                               product.imageUrl,
-                              width: 80,
-                              height: 80,
+                              width: 60,
+                              height: 60,
                               fit: BoxFit.cover,
                             ),
                           ),
@@ -758,69 +761,314 @@ class _EasyMartHomePageState extends State<EasyMartHomePage> {
                               children: [
                                 Text(
                                   product.name,
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.w700,
-                                  ),
+                                  style: const TextStyle(fontWeight: FontWeight.w700),
                                 ),
-                                const SizedBox(height: 4),
                                 Text(
-                                  'Qty: ${line.quantity} • ${_formatCurrency(product.price)} each',
-                                  style: const TextStyle(color: Color(0xFF58715A)),
+                                  'Qty: ${item.quantity}',
+                                  style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
                                 ),
                               ],
                             ),
                           ),
                           Text(
-                            _formatCurrency(total),
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                            '\$${(product.price * item.quantity).toStringAsFixed(2)}',
+                            style: const TextStyle(fontWeight: FontWeight.w800, fontSize: 16),
                           ),
                         ],
-                      );
-                    },
+                      ),
+                    );
+                  }),
+                  const Divider(),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text('Total:', style: TextStyle(fontWeight: FontWeight.w600)),
+                      Text(
+                        '\$${widget.order.subtotal.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: Color(0xFFFF6D2E)),
+                      ),
+                    ],
                   ),
-                ),
-                const Divider(),
-                Align(
-                  alignment: Alignment.centerRight,
-                  child: Text(
-                    'Total: ${_formatCurrency(order.subtotal)}',
-                    style: const TextStyle(fontSize: 22, fontWeight: FontWeight.w800),
+                  const SizedBox(height: 16),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFFFF5F0),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFFFF6D2E), width: 1),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Icons.info_outline, color: Color(0xFFFF6D2E)),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              const Text(
+                                'Delivery',
+                                style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                              ),
+                              Text(
+                                'Arriving in approximately ${25 + math.Random().nextInt(35)} minutes',
+                                style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        );
-      },
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class AdminDashboard extends StatefulWidget {
+  const AdminDashboard({super.key});
+
+  @override
+  State<AdminDashboard> createState() => _AdminDashboardState();
+}
+
+class _AdminDashboardState extends State<AdminDashboard> {
+  int _selectedNavIndex = 0;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text('Admin Panel'),
+        centerTitle: false,
+      ),
+      body: _selectedNavIndex == 0
+          ? _buildOrdersView()
+          : _selectedNavIndex == 1
+              ? _buildAnalyticsView()
+              : _buildProductsView(),
+      bottomNavigationBar: BottomNavigationBar(
+        currentIndex: _selectedNavIndex,
+        onTap: (index) => setState(() => _selectedNavIndex = index),
+        items: const [
+          BottomNavigationBarItem(icon: Icon(Icons.receipt), label: 'Orders'),
+          BottomNavigationBarItem(icon: Icon(Icons.analytics), label: 'Analytics'),
+          BottomNavigationBarItem(icon: Icon(Icons.inventory), label: 'Products'),
+        ],
+      ),
     );
   }
 
-  String _formatCurrency(double value) {
-    return ' 24${value.toStringAsFixed(2)}';
+  Widget _buildOrdersView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Order Management',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 16),
+          ...orders.map((order) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(16),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Column(
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        order.id,
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFFFF5F0),
+                          borderRadius: BorderRadius.circular(999),
+                          border: Border.all(color: const Color(0xFFFF6D2E), width: 1),
+                        ),
+                        child: Text(
+                          order.status,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: Color(0xFFFF6D2E),
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text('Items: ${order.items.length}', style: const TextStyle(color: Color(0xFF666))),
+                      Text(
+                        '\$${order.subtotal.toStringAsFixed(2)}',
+                        style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w800, color: Color(0xFFFF6D2E)),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.blue,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {},
+                          child: const Text('Accept'),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.red,
+                            foregroundColor: Colors.white,
+                          ),
+                          onPressed: () {},
+                          child: const Text('Reject'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
   }
 
-  String _formatDate(String isoDate) {
-    final date = DateTime.parse(isoDate);
-    return '${_month(date.month)} ${date.day}, ${date.year}';
+  Widget _buildAnalyticsView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Dashboard Analytics',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 16),
+          GridView.count(
+            crossAxisCount: 2,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            childAspectRatio: 1.8,
+            children: [
+              _metricCard('Total Orders', '${orders.length}', Colors.blue),
+              _metricCard('Total Revenue', '\$${orders.fold<double>(0.0, (sum, order) => sum + order.subtotal).toStringAsFixed(2)}', Colors.green),
+              _metricCard('Avg. Order', '\$${(orders.fold<double>(0.0, (sum, order) => sum + order.subtotal) / orders.length).toStringAsFixed(2)}', Colors.orange),
+              _metricCard('Products', '${products.length}', Colors.purple),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
-  String _month(int month) {
-    const months = [
-      'Jan',
-      'Feb',
-      'Mar',
-      'Apr',
-      'May',
-      'Jun',
-      'Jul',
-      'Aug',
-      'Sep',
-      'Oct',
-      'Nov',
-      'Dec',
-    ];
-    return months[month - 1];
+  Widget _buildProductsView() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Product Inventory',
+            style: TextStyle(fontSize: 28, fontWeight: FontWeight.w800),
+          ),
+          const SizedBox(height: 16),
+          ...products.take(10).map((product) {
+            return Container(
+              margin: const EdgeInsets.only(bottom: 12),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.grey.shade200),
+              ),
+              child: Row(
+                children: [
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(8),
+                    child: Image.network(
+                      product.imageUrl,
+                      width: 50,
+                      height: 50,
+                      fit: BoxFit.cover,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          product.name,
+                          style: const TextStyle(fontWeight: FontWeight.w700),
+                        ),
+                        Text(
+                          product.category,
+                          style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Text(
+                    '\$${product.price.toStringAsFixed(2)}',
+                    style: const TextStyle(fontWeight: FontWeight.w800),
+                  ),
+                ],
+              ),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+
+  Widget _metricCard(String label, String value, Color color) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            label,
+            style: TextStyle(fontSize: 12, color: color),
+          ),
+          const Spacer(),
+          Text(
+            value,
+            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w800, color: color),
+          ),
+        ],
+      ),
+    );
   }
 }
 
@@ -1131,4 +1379,3 @@ final List<StoreOrder> orders = [
     ],
   ),
 ];
-
